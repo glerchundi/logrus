@@ -10,33 +10,43 @@ import (
 	"io"
 )
 
-var mainLogger = NewLogger()
+var MainLogger = NewLogger()
 
 func init() {
-	mainLogger.SetTag(os.Args[0])
+	MainLogger.SetTag(os.Args[0])
+}
+
+type Formatter interface {
+	Format(tag, level, message string) string
+}
+
+type DefaultFormatter struct {
+}
+
+func (dlf *DefaultFormatter) Format(tag, level, message string) string {
+	timestamp := time.Now().Format(time.RFC3339)
+	hostname, _ := os.Hostname()
+	return fmt.Sprintf("%s %s %s[%d]: %s %s\n", timestamp, hostname, tag, os.Getpid(), level, message)
 }
 
 type Logger struct {
-	// Create a new instance of the logger. You can have any number of instances.
 	log *logrus.Logger
 	tag string
+	formatter Formatter
+}
+
+type logrusFormatter struct {
+	logger *Logger
+}
+
+func (l *logrusFormatter) Format(e *logrus.Entry) ([]byte, error) {
+	return []byte(l.logger.formatter.Format(l.logger.tag, strings.ToUpper(e.Level.String()), e.Message)), nil
 }
 
 func NewLogger() *Logger {
-	logger := &Logger{log:logrus.New()}
-	logger.log.Formatter = logger
+	logger := &Logger{log:logrus.New(), formatter:&DefaultFormatter{}}
+	logger.log.Formatter = &logrusFormatter{logger}
 	return logger
-}
-
-func (l *Logger) Format(e *logrus.Entry) ([]byte, error) {
-	timestamp := time.Now().Format(time.RFC3339)
-	hostname, _ := os.Hostname()
-	return []byte(
-		fmt.Sprintf(
-			"%s %s %s[%d]: %s %s\n",
-			timestamp, hostname, l.tag, os.Getpid(), strings.ToUpper(e.Level.String()), e.Message,
-		),
-	), nil
 }
 
 func (l *Logger) SetTag(tag string) {
@@ -55,8 +65,8 @@ func (l *Logger) SetOutput(w io.Writer) {
 	l.log.Out = w
 }
 
-func (l *Logger) SetFormatter(f logrus.Formatter) {
-	l.log.Formatter = f
+func (l *Logger) SetFormatter(f Formatter) {
+	l.formatter = f
 }
 
 func (l *Logger) Debugf(format string, args ...interface{}) { l.log.Debugf(format, args...) }
@@ -83,26 +93,26 @@ func (l *Logger) Errorln(args ...interface{}) { l.log.Errorln(args...) }
 func (l *Logger) Fatalln(args ...interface{}) { l.log.Fatalln(args...) }
 func (l *Logger) Panicln(args ...interface{}) { l.log.Panicln(args...) }
 
-func Debugf(format string, args ...interface{}) { mainLogger.Debugf(format, args...) }
-func Infof(format string, args ...interface{}) { mainLogger.Infof(format, args...) }
-func Printf(format string, args ...interface{}) { mainLogger.Printf(format, args...) }
-func Warnf(format string, args ...interface{}) { mainLogger.Warnf(format, args...) }
-func Errorf(format string, args ...interface{}) { mainLogger.Errorf(format, args...) }
-func Fatalf(format string, args ...interface{}) { mainLogger.Fatalf(format, args...) }
-func Panicf(format string, args ...interface{}) { mainLogger.Panicf(format, args...) }
+func Debugf(format string, args ...interface{}) { MainLogger.Debugf(format, args...) }
+func Infof(format string, args ...interface{}) { MainLogger.Infof(format, args...) }
+func Printf(format string, args ...interface{}) { MainLogger.Printf(format, args...) }
+func Warnf(format string, args ...interface{}) { MainLogger.Warnf(format, args...) }
+func Errorf(format string, args ...interface{}) { MainLogger.Errorf(format, args...) }
+func Fatalf(format string, args ...interface{}) { MainLogger.Fatalf(format, args...) }
+func Panicf(format string, args ...interface{}) { MainLogger.Panicf(format, args...) }
 
-func Debug(args ...interface{}) { mainLogger.Debug(args...) }
-func Info(args ...interface{}) { mainLogger.Info(args...) }
-func Print(args ...interface{}) { mainLogger.Print(args...) }
-func Warn(args ...interface{}) { mainLogger.Warn(args...) }
-func Error(args ...interface{}) { mainLogger.Error(args...) }
-func Fatal(args ...interface{}) { mainLogger.Fatal(args...) }
-func Panic(args ...interface{}) { mainLogger.Panic(args...) }
+func Debug(args ...interface{}) { MainLogger.Debug(args...) }
+func Info(args ...interface{}) { MainLogger.Info(args...) }
+func Print(args ...interface{}) { MainLogger.Print(args...) }
+func Warn(args ...interface{}) { MainLogger.Warn(args...) }
+func Error(args ...interface{}) { MainLogger.Error(args...) }
+func Fatal(args ...interface{}) { MainLogger.Fatal(args...) }
+func Panic(args ...interface{}) { MainLogger.Panic(args...) }
 
-func Debugln(args ...interface{}) { mainLogger.Debugln(args...) }
-func Infoln(args ...interface{}) { mainLogger.Infoln(args...) }
-func Println(args ...interface{}) { mainLogger.Println(args...) }
-func Warnln(args ...interface{}) { mainLogger.Warnln(args...) }
-func Errorln(args ...interface{}) { mainLogger.Errorln(args...) }
-func Fatalln(args ...interface{}) { mainLogger.Fatalln(args...) }
-func Panicln(args ...interface{}) { mainLogger.Panicln(args...) }
+func Debugln(args ...interface{}) { MainLogger.Debugln(args...) }
+func Infoln(args ...interface{}) { MainLogger.Infoln(args...) }
+func Println(args ...interface{}) { MainLogger.Println(args...) }
+func Warnln(args ...interface{}) { MainLogger.Warnln(args...) }
+func Errorln(args ...interface{}) { MainLogger.Errorln(args...) }
+func Fatalln(args ...interface{}) { MainLogger.Fatalln(args...) }
+func Panicln(args ...interface{}) { MainLogger.Panicln(args...) }

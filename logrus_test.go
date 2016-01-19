@@ -13,7 +13,7 @@ const (
 
 func TestMainLogger(t *testing.T) {
     var buffer bytes.Buffer
-    mainLogger.SetOutput(&buffer)
+    MainLogger.SetOutput(&buffer)
     Info(testString)
     assert.Contains(t, buffer.String(), testString)
 }
